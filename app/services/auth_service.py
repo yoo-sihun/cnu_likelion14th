@@ -11,11 +11,30 @@ Phase 1:
 - JWT 토큰 발급/검증은 Session 2에서 추가
 """
 
+import re
 from sqlalchemy.orm import Session
 
 from app.models.user import User
 from app.repositories import user_repo
 from app.schemas.auth import LoginRequest, SignupRequest
+
+
+def _validate_password_policy(password: str):
+    """
+    비밀번호 정책:
+    - 8자 이상
+    - 영문 포함
+    - 숫자 포함
+    - 특수문자 포함
+    """
+    if len(password) < 8:
+        raise ValueError("비밀번호는 8자 이상이어야 합니다")
+    if not re.search(r"[A-Za-z]", password):
+        raise ValueError("비밀번호에 영문을 포함해야 합니다")
+    if not re.search(r"\d", password):
+        raise ValueError("비밀번호에 숫자를 포함해야 합니다")
+    if not re.search(r"[^A-Za-z0-9]", password):
+        raise ValueError("비밀번호에 특수문자를 포함해야 합니다")
 
 
 def signup(db: Session, request: SignupRequest):
@@ -27,6 +46,9 @@ def signup(db: Session, request: SignupRequest):
 
     주의: 비밀번호를 평문으로 저장한다 (Session 2에서 bcrypt 해싱 추가 예정)
     """
+    # 0. 비밀번호 정책 확인
+    _validate_password_policy(request.password)
+
     # 1. 이미 가입된 이메일인지 확인
     existing = user_repo.get_user_by_email(db, request.email)
     if existing:

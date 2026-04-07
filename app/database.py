@@ -53,7 +53,8 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 # - class User(Base): 이렇게 쓰면 SQLAlchemy가
 #   "아, 이 클래스는 DB 테이블이구나"를 인식한다
 # ──────────────────────────────────────────────
-engine = create_engine(DATABASE_URL)
+# pool_pre_ping: 클라우드 DB에서 끊긴 연결을 요청 전에 감지해 재연결
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
