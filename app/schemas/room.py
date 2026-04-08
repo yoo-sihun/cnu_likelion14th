@@ -13,4 +13,5 @@ class RoomResponse(BaseModel):
     """스터디룸 응답"""
     id: int
     name: str
+    capacity: int
     created_at: datetime

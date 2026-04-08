@@ -92,6 +92,8 @@ def create_reservation(db: Session, user_id: int, request: ReservationCreate):
         room_id=request.room_id,
         start_time=start_utc,
         end_time=end_utc,
+        reservation_date=start_utc.date(),
+        status="confirmed",
     )
     return reservation_repo.create_reservation(db, new_reservation)
 

@@ -1,8 +1,8 @@
 """
-User 모델 — users 테이블을 파이썬 클래스로 정의한 것
+User 모델 — user 테이블을 파이썬 클래스로 정의한 것
 
-Supabase(DB)에 이미 만들어둔 users 테이블이 있다.
-SQLAlchemy가 이 클래스를 보고 "아, users 테이블은 이렇게 생겼구나"를 이해한다.
+Supabase(DB)에 이미 만들어둔 user 테이블이 있다.
+SQLAlchemy가 이 클래스를 보고 "아, user 테이블은 이렇게 생겼구나"를 이해한다.
 
 즉, DB 테이블의 '설계도'를 파이썬 코드로 옮긴 것.
 """
@@ -14,14 +14,14 @@ from app.database import Base
 
 class User(Base):
     """
-    users 테이블 정의
+    user 테이블블
 
     Base를 상속받으면 SQLAlchemy가 이 클래스를 DB 테이블로 인식한다.
     """
 
     # 이 클래스가 어떤 테이블에 매핑되는지 지정
     # 이걸 안 쓰면 SQLAlchemy가 어떤 테이블인지 모른다
-    __tablename__ = "users"
+    __tablename__ = "user"
 
     # ── 컬럼 정의 ──
     # Column(타입, 옵션) 형태로 쓴다

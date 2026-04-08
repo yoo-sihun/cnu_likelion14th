@@ -31,4 +31,3 @@ class PostResponse(BaseModel):
     content: str
     view_count: int
     created_at: datetime
-    updated_at: datetime

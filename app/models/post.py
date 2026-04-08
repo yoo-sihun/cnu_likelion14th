@@ -11,7 +11,7 @@ class Post(Base):
     __tablename__ = "posts"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
 
     title = Column(String(200), nullable=False)
 
@@ -23,7 +23,3 @@ class Post(Base):
     view_count = Column(Integer, default=0)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    # updated_at: 글 수정 시 갱신되는 시간
-    # onupdate=func.now(): UPDATE 쿼리 실행 시 자동으로 현재 시각으로 변경
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

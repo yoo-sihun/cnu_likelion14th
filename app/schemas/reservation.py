@@ -2,7 +2,7 @@
 Reservation 스키마 — 예약 요청/응답 형태
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from pydantic import BaseModel
 
 
@@ -20,4 +20,6 @@ class ReservationResponse(BaseModel):
     room_id: int
     start_time: datetime
     end_time: datetime
+    reservation_date: date
+    status: str
     created_at: datetime
