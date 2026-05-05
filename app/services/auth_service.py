@@ -11,12 +11,25 @@ Phase 1:
 - JWT 토큰 발급/검증은 Session 2에서 추가
 """
 
+import os
 import re
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
+from dotenv import load_dotenv
 
 from app.models.user import User
 from app.repositories import user_repo
 from app.schemas.auth import LoginRequest, SignupRequest
+
+from passlib.context import CryptContext
+from jose import jwt
+
+load_dotenv()
+
+pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-me")
+ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_SECONDS = int(os.getenv("JWT_EXPIRATION_TIME", "1800"))
 
 
 def _validate_password_policy(password: str):
@@ -36,16 +49,8 @@ def _validate_password_policy(password: str):
     if not re.search(r"[^A-Za-z0-9]", password):
         raise ValueError("비밀번호에 특수문자를 포함해야 합니다")
 
-
+# 회원가입입
 def signup(db: Session, request: SignupRequest):
-    """
-    회원가입
-
-    1. 이메일 중복 체크 (비즈니스 규칙)
-    2. DB에 저장 (Repository 호출)
-
-    주의: 비밀번호를 평문으로 저장한다 (Session 2에서 bcrypt 해싱 추가 예정)
-    """
     # 0. 비밀번호 정책 확인
     _validate_password_policy(request.password)
 
@@ -54,27 +59,28 @@ def signup(db: Session, request: SignupRequest):
     if existing:
         raise ValueError("이미 존재하는 이메일입니다")
 
-    # 2. User 모델 생성 후 DB에 저장 (비밀번호 평문 저장 — Session 2에서 해싱 추가)
+    # 2. 비밀번호 해시 후 DB에 저장
+    hashed_password = pwd_ctx.hash(request.password)
     new_user = User(
         email=request.email,
         username=request.username,
-        password=request.password,
+        password=hashed_password,
         nickname=request.nickname,
     )
     return user_repo.create_user(db, new_user)
 
-
+# 로그인인
 def login(db: Session, request: LoginRequest):
-    """
-    로그인
-
-    1. email로 유저 조회
-    2. password 평문 비교
-    3. 맞으면 user_id 반환
-    """
     user = user_repo.get_user_by_email(db, request.email)
 
-    if not user or user.password != request.password:
+    if not user or not pwd_ctx.verify(request.password, user.password):
         raise ValueError("이메일 또는 비밀번호가 올바르지 않습니다")
 
-    return {"user_id": user.id}
+    expire_at = datetime.now(timezone.utc) + timedelta(seconds=ACCESS_TOKEN_EXPIRE_SECONDS)
+    payload = {
+        "sub": str(user.id),
+        "role": user.role,
+        "exp": expire_at,
+    }
+    access_token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    return {"access_token": access_token, "token_type": "bearer"}

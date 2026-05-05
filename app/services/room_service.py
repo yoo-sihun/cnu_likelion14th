@@ -5,7 +5,9 @@ Phase 1에서는 단순 조회만.
 """
 
 from sqlalchemy.orm import Session
+from app.models.study_room import StudyRoom
 from app.repositories import room_repo
+from app.schemas.room import RoomCreate, RoomUpdate
 
 
 def get_rooms(db: Session):
@@ -19,3 +21,34 @@ def get_room(db: Session, room_id: int):
     if not room:
         raise ValueError("스터디룸을 찾을 수 없습니다")
     return room
+
+
+def create_room(db: Session, request: RoomCreate):
+    """스터디룸 생성"""
+    room = StudyRoom(
+        name=request.name,
+        capacity=request.capacity,
+    )
+    return room_repo.create_room(db, room)
+
+
+def update_room(db: Session, room_id: int, request: RoomUpdate):
+    """스터디룸 수정"""
+    room = room_repo.get_room_by_id(db, room_id)
+    if not room:
+        raise ValueError("스터디룸을 찾을 수 없습니다")
+
+    if request.name is not None:
+        room.name = request.name
+    if request.capacity is not None:
+        room.capacity = request.capacity
+
+    return room_repo.update_room(db, room)
+
+
+def delete_room(db: Session, room_id: int):
+    """스터디룸 삭제"""
+    room = room_repo.get_room_by_id(db, room_id)
+    if not room:
+        raise ValueError("스터디룸을 찾을 수 없습니다")
+    room_repo.delete_room(db, room)

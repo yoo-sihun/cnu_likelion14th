@@ -3,14 +3,20 @@ Comments Router — 댓글 API
 
 댓글은 게시글에 종속되므로 URL이 /posts/{post_id}/comments 형태.
 
+댓글 조회는 누구나 가능
+작성/삭제는 JWT인증 필요
+
 Phase 1: JWT 인증 없이 user_id를 쿼리 파라미터로 전달
          (Session 2에서 JWT 토큰 기반 인증으로 변경 예정)
+Phase 2 + 4: user_id 쿼리 파라미터 -> Depends(get_current_user)로 변경
 """
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.dependencies import get_current_user
+from app.models.user import User
 from app.schemas.comment import CommentCreate, CommentResponse
 from app.services import comment_service
 
@@ -32,7 +38,7 @@ def get_comments(post_id: int, db: Session = Depends(get_db)):
 def create_comment(
     post_id: int,
     request: CommentCreate,
-    user_id: int,  # 쿼리 파라미터로 유저 id 전달 (Session 2에서 JWT 인증으로 변경 예정)
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -42,7 +48,7 @@ def create_comment(
     요청: {"content": "댓글 내용"}
     """
     try:
-        return comment_service.create_comment(db, user_id, post_id, request)
+        return comment_service.create_comment(db, current_user.id, post_id, request)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -50,7 +56,7 @@ def create_comment(
 @router.delete("/{comment_id}")
 def delete_comment(
     comment_id: int,
-    user_id: int,  # 쿼리 파라미터로 유저 id 전달 (Session 2에서 JWT 인증으로 변경 예정)
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -59,7 +65,7 @@ def delete_comment(
     DELETE /posts/3/comments/7?user_id=1
     """
     try:
-        comment_service.delete_comment(db, user_id, comment_id)
+        comment_service.delete_comment(db, current_user.id, comment_id)
         return {"message": "댓글이 삭제되었습니다"}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

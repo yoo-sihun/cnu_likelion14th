@@ -43,6 +43,7 @@ class User(Base):
 
     nickname = Column(String(50), nullable=False)
 
+    role = Column(String(20), nullable=False, default="user")
     # DateTime(timezone=True): 시간대 정보 포함 (TIMESTAMPTZ)
     # server_default=func.now(): DB에서 INSERT할 때 자동으로 현재 시각 입력
     # → 코드에서 created_at을 안 넣어도 DB가 알아서 채워준다

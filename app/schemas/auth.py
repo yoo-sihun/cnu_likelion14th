@@ -42,16 +42,24 @@ class LoginRequest(BaseModel):
     """
     로그인 시 클라이언트가 보내는 데이터
 
-    Phase 1에서는 email + password를 평문 비교한다.
+    로그인 검증에 사용할 email + password를 받는다.
+    
+    email: str
+    password: str
     """
     email: str
     password: str
-
 
 class LoginResponse(BaseModel):
     """
     로그인 성공 시 돌려주는 데이터
 
-    Phase 1에서는 JWT 대신 user_id만 반환한다.
+    로그인 성공 시 JWT access token을 반환한다.
     """
+    access_token: str
+    token_type: str = "bearer"
+
+# 토큰 데이터
+class TokenData(BaseModel):
     user_id: int
+    role: str

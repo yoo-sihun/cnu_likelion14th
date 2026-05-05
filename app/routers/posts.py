@@ -12,6 +12,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.dependencies import get_current_user
+from app.models.user import User
 from app.schemas.post import PostCreate, PostUpdate, PostResponse
 from app.services import post_service
 from app.repositories import like_repo
@@ -48,7 +50,7 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
 @router.post("/", response_model=PostResponse)
 def create_post(
     request: PostCreate,
-    user_id: int,  # 쿼리 파라미터로 유저 id 전달 (Session 2에서 JWT 인증으로 변경 예정)
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -57,14 +59,14 @@ def create_post(
     POST /posts?user_id=1
     요청: {"title": "...", "content": "..."}
     """
-    return post_service.create_post(db, user_id, request)
+    return post_service.create_post(db, current_user.id, request)
 
 
 @router.patch("/{post_id}", response_model=PostResponse)
 def update_post(
     post_id: int,
     request: PostUpdate,
-    user_id: int,  # 쿼리 파라미터로 유저 id 전달 (Session 2에서 JWT 인증으로 변경 예정)
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -74,7 +76,7 @@ def update_post(
     요청: {"title": "새 제목"} (바꿀 필드만 보내면 된다)
     """
     try:
-        return post_service.update_post(db, user_id, post_id, request)
+        return post_service.update_post(db, current_user.id, post_id, request)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except PermissionError as e:
@@ -84,7 +86,7 @@ def update_post(
 @router.delete("/{post_id}")
 def delete_post(
     post_id: int,
-    user_id: int,  # 쿼리 파라미터로 유저 id 전달 (Session 2에서 JWT 인증으로 변경 예정)
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -93,7 +95,7 @@ def delete_post(
     DELETE /posts/3?user_id=1
     """
     try:
-        post_service.delete_post(db, user_id, post_id)
+        post_service.delete_post(db, current_user.id, post_id)
         return {"message": "게시글이 삭제되었습니다"}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -106,7 +108,7 @@ def delete_post(
 @router.post("/{post_id}/like")
 def toggle_like(
     post_id: int,
-    user_id: int,  # 쿼리 파라미터로 유저 id 전달 (Session 2에서 JWT 인증으로 변경 예정)
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -116,12 +118,12 @@ def toggle_like(
     이미 좋아요 했으면 -> 취소
     아직 안 했으면 -> 좋아요
     """
-    existing = like_repo.get_like(db, user_id, post_id)
+    existing = like_repo.get_like(db, current_user.id, post_id)
     if existing:
         like_repo.delete_like(db, existing)
         message = "좋아요를 취소했습니다"
     else:
-        new_like = Like(user_id=user_id, post_id=post_id)
+        new_like = Like(user_id=current_user.id, post_id=post_id)
         like_repo.create_like(db, new_like)
         message = "좋아요를 눌렀습니다"
 

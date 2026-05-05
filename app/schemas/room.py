@@ -15,3 +15,15 @@ class RoomResponse(BaseModel):
     name: str
     capacity: int
     created_at: datetime
+
+
+class RoomCreate(BaseModel):
+    """스터디룸 생성 요청"""
+    name: str
+    capacity: int
+
+
+class RoomUpdate(BaseModel):
+    """스터디룸 수정 요청 (부분 수정 허용)"""
+    name: str | None = None
+    capacity: int | None = None
